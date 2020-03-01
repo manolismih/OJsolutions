@@ -1,0 +1,37 @@
+PROGRAM numtri;
+
+VAR
+  n, i, j : byte;
+  numbers : array[1..100,1..100,1..2] of integer;
+
+function best(x,y : byte) : integer;
+var a,b : integer;
+begin
+  if x = n then
+  begin
+    numbers[x,y,2] := numbers[x,y,1];
+    exit(numbers[x,y,1]);
+    end;
+  if numbers[x,y,2] <> 0 then
+    exit(numbers[x,y,2]);
+  a := best(x+1,y);
+  b := best(x+1,y+1);
+  if a > b then
+  begin
+    numbers[x,y,2] := a+numbers[x,y,1];
+    exit(numbers[x,y,2]);
+    end
+  else
+  begin
+    numbers[x,y,2] := b+numbers[x,y,1];
+    exit(numbers[x,y,2]);
+    end;
+  end;
+
+BEGIN
+  readln(n);
+  for i := 1 to n do
+    for j := 1 to i do
+      read(numbers[i,j,1]);
+  writeln(best(1,1));
+  END.
