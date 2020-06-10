@@ -1,105 +1,74 @@
-/*
-ID:manolis2
-PROG:race3
-LANG:C++11
-*/
 #include <cstdio>
-#include <vector>
-#include <queue>
-#include <bitset>
-#include <iostream>
+#include <deque>
+#include <cstring>
 
-using namespace std;
+int N, vis[50], order[50];
+std::deque<int> alist[50], path, unavoidable, seperation;
 
-FILE *fin = fopen("race3.in","r");
-FILE *fout = fopen("race3.out","w");
-int n=0;
-vector<int> alist[55], oalist[55], unavoidable, diaxoristika;
-bitset<55> memo[55];
-queue<int> tpsqueue;
-bool visited[55], visited1[55], visited2[55];
-
-void toposort_and_dp()
+bool addToPath(int v, int count)
 {
-	while (!tpsqueue.empty())
-	{
-		if (!visited[tpsqueue.front()])
-		{
-			int v = tpsqueue.front();
-			visited[v] = true;
-			for (int i=0; i<alist[v].size(); i++)
-				memo[v] &= memo[alist[v][i]];
-			memo[v].set(v); 
-			for (int i=0; i<oalist[v].size(); i++)
-				tpsqueue.push(oalist[v][i]);
-		}
-		tpsqueue.pop();
-	}
-}
-
-void findkomvous(int from, int to, bool* visited)
-{
-	if (visited[from] || from == to) return;
-	visited[from] = true;
-	for (int i=0; i<alist[from].size(); i++)	
-		findkomvous(alist[from][i],to,visited);
-}
-
-bool check()
-{
-	for (int i=0; i<n; i++)
-		if (visited1[i] == visited2[i])
-			return false;
+	path.push_front(v);
+	order[v]=count;
 	return true;
 }
 
+void clearSeperation(int stop)
+{
+	while (!seperation.empty() && order[seperation.back()]>stop )
+		seperation.pop_back();
+}
+
+bool findPath(int v, int count)
+{
+	if (v==N) return addToPath(v,count);
+	vis[v]=1;
+	for (unsigned int i=0; i<alist[v].size(); i++)
+		if (!vis[alist[v][i]] && findPath(alist[v][i],count+1) ) 
+			return addToPath(v,count);
+	return false;
+}
+
+void dfs(int v, int& furthest, int area)
+{
+	vis[v] = area;
+	for (int unsigned i=0; i<alist[v].size(); i++)
+	{
+		int next = alist[v][i];
+		if (vis[next]) 		  clearSeperation(vis[next]);
+		else if (order[next]) furthest = std::max(furthest,order[next]);
+		else 				  dfs(next,furthest,area);
+	}	
+}
 
 int main()
 {
-	int i=0, temp;
-	while (fscanf(fin,"%i",&temp) && temp != -1)
+	//reading
+	freopen("race.in","r",stdin);
+	freopen("race.out","w",stdout);
+	int v;
+	for (N=0; scanf("%d",&v) && v!=-1; N++)
+		for (; v!=-2; scanf("%d",&v)) alist[N].push_back(v);
+	N--;
+	
+	findPath(0,1);
+	
+	/* Furthest point in main path reachable from a deviation.
+	 * Numbering follows the order in main path ie 1,2,...,path.size() */
+	int furthest=1;
+	memset(vis,0,sizeof(vis));
+	for (unsigned int i=0; i<path.size()-1; i++)
 	{
-		while (temp != -2)
+		int v = path[i];
+		if (furthest <= order[v])
 		{
-			alist[i].push_back(temp);
-			oalist[temp].push_back(i);
-			if (temp>n) n=temp;
-			fscanf(fin,"%i",&temp);
+			unavoidable.push_back(v);
+			seperation.push_back(v);
 		}
-		i++;
+		dfs(v,furthest,order[unavoidable.back()]);
 	}
 	
-	for (int i=0; i<oalist[n].size(); i++)
-		tpsqueue.push(oalist[n][i]);
-	for (int i=0; i<n; i++)
-		memo[i].set();
-	toposort_and_dp();
-	
-	for (int i=1; i<n; i++)
-		if (memo[0][i])
-			unavoidable.push_back(i);
-	fprintf(fout,"%i",unavoidable.size());
-	for (int i=0; i<unavoidable.size(); i++)
-		fprintf(fout," %i",unavoidable[i]);
-	fprintf(fout,"\n");
-	
-	for (int i=0; i<unavoidable.size(); i++)
-	{
-		findkomvous(0,unavoidable[i],visited1);
-		findkomvous(unavoidable[i],n,visited2);
-		if (check())
-			diaxoristika.push_back(unavoidable[i]);
-		for (int i=0; i<=n; i++)
-		{
-			visited1[i] = 0;
-			visited2[i] = 0;
-		}
-	}
-	fprintf(fout,"%i",diaxoristika.size());
-	for (int i=0; i<diaxoristika.size(); i++)
-		fprintf(fout," %i",diaxoristika[i]);
-	fprintf(fout,"\n");
-	return 0;
+	printf("%lu ",unavoidable.size()-1);
+	for (unsigned int i=1; i<unavoidable.size(); i++) printf("%d ",unavoidable[i]);
+	printf("\n%lu ",seperation.size()-1);
+	for (unsigned int i=1; i<seperation.size(); i++) printf("%d ",seperation[i]);
 }
-
-
