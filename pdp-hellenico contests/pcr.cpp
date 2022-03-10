@@ -13,8 +13,8 @@ int dp[100005][2][2][2][4][4][4];
 
 int main()
 {
-	freopen("pcr.in","r",stdin);
-	freopen("pcr.out","w",stdout);
+	//~ freopen("pcr.in","r",stdin);
+	//~ freopen("pcr.out","w",stdout);
 	scanf("%d%d",&T,&N);
 	while (T--)
 	{
@@ -43,7 +43,9 @@ int main()
 									 */
 									if (element==right || element!=left && (mid==0||(other>element)+1==mid) )
 									{
-										int newmid = (element!=right && left!=right) ? mid+1+(right>other) : mid;
+										int newmid = mid;
+                    if (element!=right && left!=right)
+                      newmid = mid==0 ? mid+1+(right>other) : 3;
 										do_p = 1+dp[i+1][0][0][complemented][left][newmid][element];
 									}									
 									dp[i][c][r][complemented][left][mid][right] = std::min({do_c,do_r,do_p});
@@ -56,15 +58,19 @@ int main()
 			int best = dp[i][c][r][complemented][left][mid][right];
 			int element = complemented ? 3-num[i] : num[i];
 			int other = 6-left-right-element;
-			char move;
+			char move=0;
 			
 			if (!c && best==1+dp[i][1][r][!complemented][left][mid][right])
 				move='c', c=1, complemented = !complemented;
-			else if (element==right || element!=left && (mid==0||(other>element)+1==mid) ) {
-				mid = (element!=right && left!=right) ? mid+1+(right>other) : mid;
-				move='p', c=r=0, right=element, i++;
+			else if (element==right || element!=left && (mid==0||(other>element)+1==mid) )
+      {
+        int newmid = mid;
+        if (element!=right && left!=right)
+          newmid = mid==0 ? mid+1+(right>other) : 3;
+        if (best==1+dp[i+1][0][0][complemented][left][newmid][element])
+          move='p', c=r=0, mid=newmid, right=element, i++;
 			}
-			else {
+			if (move==0) {
 				move='r', r=1;
 				std::swap(left,right); 
 			}
@@ -72,4 +78,5 @@ int main()
 		}
 		putchar('\n');
 	}
+  return 0;
 }
